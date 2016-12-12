@@ -3,15 +3,9 @@
 #include <FIMU_ITG3200.h>
 #include <Wire.h>
 
-#include "cheirogant.h"
-#include "math.h"
-
-static FreeSixIMU sixDOF = FreeSixIMU();
-Values g_values;
-int16_t g_angle_x;
-int16_t g_angle_y;
-int g_last_acc_z;
-int g_motor_power;
+FreeSixIMU sixDOF = FreeSixIMU();
+int g_values[6];
+int16_t g_angles[2];
 
 void setup() {
   Serial.begin(9600);
@@ -20,21 +14,34 @@ void setup() {
 }
 
 void loop() {
-  sixDOF.getRawValues(reinterpret_cast<int*>(&g_values));
-  g_angle_x = _atan2(g_values.acc.x, g_values.acc.z);
-  g_angle_y = _atan2(g_values.acc.y, g_values.acc.z);
+  sixDOF.getRawValues(g_values);
+  g_angles[0] = _atan2(g_values[0], g_values[2]);
+  g_angles[1] = _atan2(g_values[1], g_values[2]);
   Serial.print(" X: ");
-  Serial.print(g_angle_x / 10.0);
+  Serial.print(g_angles[0] / 10.0);
   Serial.print(" Y: ");
-  Serial.print(g_angle_y / 10.0);
-  Serial.print(" acc.Z: ");
-  // 230 correspond à la valeur de l'accélération z quand il n'y a pas de mouvement
-  // (dépend de la pesanteur ; 230 à Paris)
-  const int z = map(g_values.acc.z - 230, -512, 512, 0, 100);
-  Serial.print(z);
-  Serial.print(" difference : ");
-  Serial.print(z - g_last_acc_z);
+  Serial.print(g_angles[1] / 10.0);
   Serial.println();
   delay(100);
-  g_last_acc_z = z;
+}
+
+int16_t _atan2(int32_t y, int32_t x)
+{
+  float z = (float)(y / x);
+  int16_t a;
+  if ( abs(y) < abs(x) )
+  {
+    a = 573 * z / (1.0f + 0.28f * z * z);
+    if (x<0)
+    {
+    if (y<0) a -= 1800;
+    else a += 1800;
+    }
+  }
+  else
+  {
+    a = 900 - 573 * z / (z * z + 0.28f);
+    if (y<0) a -= 1800;
+  }
+  return a;
 }
