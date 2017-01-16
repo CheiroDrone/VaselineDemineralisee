@@ -1,8 +1,11 @@
 #include <FreeSixIMU.h>
 #include <FIMU_ADXL345.h>
 #include <FIMU_ITG3200.h>
+#include <Ultrasonic.h>
 
 #include <Wire.h>
+
+Ultrasonic ultrasonic(6);
 
 FreeSixIMU sixDOF = FreeSixIMU();
 int rawSixDof[6];
@@ -81,6 +84,9 @@ void loop()
   Serial.println();
 
   updateMotorSpeed(angle[0] / 10.0, angle[1] / 10.0);
+
+  long distance = ultrasonic.MeasureInCentimeters();
+  Serial.println(distance);
 
   delay(100);
 }
